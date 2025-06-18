@@ -1,6 +1,7 @@
-from typing import Dict, List
-from dataclasses import dataclass
 from collections import OrderedDict
+from dataclasses import dataclass
+from typing import Dict, List
+
 
 @dataclass
 class ModelConfig:
@@ -15,19 +16,19 @@ CHATGPT_MODELS = OrderedDict({
     "GPT-4o": ModelConfig(
         provider="openai",
         model_name="gpt-4o",
-        max_tokens=8192,
-        temperature=0.7,
-    ),
-    "GPT-4-Turbo": ModelConfig(
-        provider="openai",
-        model_name="gpt-4-turbo-preview",
         max_tokens=128000,
         temperature=0.7,
     ),
-    "GPT-3.5-turbo": ModelConfig(
+    "GPT-4.1-mini": ModelConfig(
         provider="openai",
-        model_name="gpt-3.5-turbo",
-        max_tokens=4096,
+        model_name="gpt-4.1-mini",
+        max_tokens=1047576,
+        temperature=0.7,
+    ),
+    "GPT-4o-mini": ModelConfig(
+        provider="openai",
+        model_name="gpt-4o-mini",
+        max_tokens=128000,
         temperature=0.7,
     ),
 })
@@ -59,19 +60,19 @@ GEMINI_MODELS = OrderedDict({
     "Gemini 1.5 Pro": ModelConfig(
         provider="google",
         model_name="gemini-1.5-pro-latest",
-        max_tokens=32768,
+        max_tokens=2097152,
+        temperature=0.7,
+    ),
+    "Gemini 2.0 Flash": ModelConfig(
+        provider="google",
+        model_name="gemini-1.5-flash-latest",
+        max_tokens=1048576,
         temperature=0.7,
     ),
     "Gemini 1.5 Flash": ModelConfig(
         provider="google",
         model_name="gemini-1.5-flash-latest",
-        max_tokens=32768,
-        temperature=0.7,
-    ),
-    "Gemini 1.0 Pro": ModelConfig(
-        provider="google",
-        model_name="gemini-1.0-pro-latest",
-        max_tokens=32768,
+        max_tokens=1048576,
         temperature=0.7,
     ),
 })

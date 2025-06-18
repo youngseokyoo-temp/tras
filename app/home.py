@@ -1,10 +1,22 @@
 import streamlit as st
 
-from utils.ui_constants import PROJECT_TITLE, PROJECT_ICON, PROJECT_LOGO_HTML, CHAT_INPUT_PLACEHOLDER, MODEL_LOADING_ERROR_MESSAGE
-from utils.streamlit_helpers import print_message, print_messages, print_greeting_message, get_session_id, save_message
-from utils.logger import get_logger
-from llms import get_llm_instance, AVAILABLE_MODELS
-from llms.config import get_model_versions, get_model_config
+from app.llms.config import AVAILABLE_MODELS, get_model_config, get_model_versions
+from app.llms.factory import get_llm_instance
+from app.utils.logger import get_logger
+from app.utils.streamlit_helpers import (
+    get_session_id,
+    print_greeting_message,
+    print_message,
+    print_messages,
+    save_message,
+)
+from app.utils.ui_constants import (
+    CHAT_INPUT_PLACEHOLDER,
+    MODEL_LOADING_ERROR_MESSAGE,
+    PROJECT_ICON,
+    PROJECT_LOGO_HTML,
+    PROJECT_TITLE,
+)
 
 # Page Config
 st.set_page_config(

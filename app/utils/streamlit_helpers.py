@@ -1,7 +1,9 @@
-import streamlit as st
 import uuid
 
-from utils.ui_constants import GREETING_MESSAGE
+import streamlit as st
+
+from app.utils.ui_constants import GREETING_MESSAGE
+
 
 def get_session_id():
     if "session_id" not in st.session_state:

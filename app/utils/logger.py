@@ -1,7 +1,9 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from utils.env_constants import LOGS_DIR
+
+from app.utils.env_constants import LOGS_DIR
+
 
 def get_logger(session_id: str) -> logging.Logger:
     logger_name = f"logger_{session_id}"

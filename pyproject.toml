@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tras"
+version = "0.1.0"
+description = "TRAS! - 나만의 여행 플랜 어시스턴트"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Yoo Young Seok", email = "richpinkr99@gmail.com" }
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+]
+dependencies = [
+    "streamlit>=1.45.1",
+    "langchain>=0.3.25",
+    "langgraph>=0.4.8",
+    "langchain-community>=0.3.25",
+    "langchain-openai>=0.3.23",
+    "langchain-anthropic>=0.3.15",
+    "langchain-google-genai>=2.1.5",
+    "langchain-tavily>=0.2.3",
+    "python-dotenv>=1.0.0",
+    "requests>=2.32.4",
+    "aiohttp>=3.12.13",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.4.0",
+    "ruff>=0.11.13",
+]
+
+[project.scripts]
+tras = "app.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "B", "I"]
+ignore = []
+
+[tool.ruff.isort]
+known-first-party = ["app"]
