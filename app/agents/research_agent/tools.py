@@ -1,10 +1,10 @@
-import asyncio
-from typing import Dict, List
+from typing import Annotated, Dict, List
 
 import aiohttp
 import requests
 from langchain_core.tools import Tool, BaseTool
 from langchain_community.retrievers import WikipediaRetriever
+from langchain_google_community import GooglePlacesTool
 from langchain_tavily import TavilySearch
 from langchain_core.documents import Document
 
@@ -48,7 +48,7 @@ def _get_request_params(query: str) -> tuple[Dict, Dict]:
     return headers, params
 
 
-def kakao_search_sync(query: str) -> List[Dict]:
+def kakao_search_sync(query: Annotated[str, "query for kakao search"]) -> List[Dict]:
     """Search points‑of‑interest via Kakao Local keyword search API (Synchronous).
 
     Args:
@@ -68,7 +68,7 @@ def kakao_search_sync(query: str) -> List[Dict]:
         return [{"error": f"Kakao search error: {str(e)}"}]
 
 
-async def kakao_search_async(query: str) -> List[Dict]:
+async def kakao_search_async(query: Annotated[str, "query for kakao search"]) -> List[Dict]:
     """Search points‑of‑interest via Kakao Local keyword search API (Asynchronous).
 
     Args:
@@ -101,7 +101,7 @@ def get_kakao_search_tool() -> Tool:
     )
 
 
-def wikipedia_search_sync(query: str) -> List[Document]:
+def wikipedia_search_sync(query: Annotated[str, "query for wikipedia search"]) -> List[Document]:
     try:
         retriever = WikipediaRetriever(top_k_results=3, lang="ko")
         return retriever.get_relevant_documents(query)
@@ -123,9 +123,14 @@ def get_tavily_search_tool() -> BaseTool:
     return TavilySearch(max_results=3, topic="general")
 
 
+def get_gplaces_search_tool() -> BaseTool:
+    """Return Gplaces search tool"""
+    return GooglePlacesTool()
+
+
 if __name__ == "__main__":
     # Test
     #print("Sync test:", kakao_search_sync("서울 종로구 종로3가"))
     #print("Async test:", asyncio.run(kakao_search_async("부산 해운대")))
-    print(get_tavily_search_tool().invoke("서울 종로구 종로3가"))
-
+    #print(get_tavily_search_tool().invoke("서울 종로구 종로3가"))
+    print(get_gplaces_search_tool().invoke("신도림동"))
