@@ -1,4 +1,4 @@
-from typing import Annotated, Dict, List
+from typing import Annotated, Dict, List, Union
 import aiohttp
 import requests
 from urllib.parse import urlparse
@@ -149,7 +149,7 @@ def to_mobile_view(url: str) -> str:
     return url
 
 
-def _load_page_content_sync(urls: Annotated[List[str], "list of URLs"]) -> List[str]:
+def _load_page_content_sync(urls: Annotated[Union[List[str], str], "list of URLs"]) -> List[str]:
     """Load page content from URL (synchronous)
 
     Args:
@@ -159,7 +159,10 @@ def _load_page_content_sync(urls: Annotated[List[str], "list of URLs"]) -> List[
         List[str]: list of page contents
     """
     try:
-        mobile_urls = [to_mobile_view(url) for url in urls]
+        if isinstance(urls, str):
+            mobile_urls = [to_mobile_view(urls)]
+        elif isinstance(urls, list):
+            mobile_urls = [to_mobile_view(url) for url in urls]
         loader = PlaywrightURLLoader(mobile_urls, continue_on_failure=True)
         docs = loader.load()
         return [doc.page_content for doc in docs]
@@ -167,7 +170,7 @@ def _load_page_content_sync(urls: Annotated[List[str], "list of URLs"]) -> List[
         return [{"error": f"Web Loader error: {str(e)}"}]
 
 
-async def _load_page_content_async(urls: Annotated[List[str], "list of URLs"]) -> List[str]:
+async def _load_page_content_async(urls: Annotated[Union[List[str], str], "list of URLs"]) -> List[str]:
     """Load page content from URL (asynchronous)
 
     Args:
@@ -178,6 +181,10 @@ async def _load_page_content_async(urls: Annotated[List[str], "list of URLs"]) -
     """
     contents = []
     try:
+        if isinstance(urls, str):
+            mobile_urls = [to_mobile_view(urls)]
+        elif isinstance(urls, list):
+            mobile_urls = [to_mobile_view(url) for url in urls]
         mobile_urls = [to_mobile_view(url) for url in urls]
         loader = PlaywrightURLLoader(mobile_urls, continue_on_failure=True)
         async for doc in loader.aload():

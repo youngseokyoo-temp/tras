@@ -1,17 +1,17 @@
 from langchain_core.language_models import BaseChatModel
-from langgraph.prebuilt import create_react_agent
 from langgraph.graph.graph import CompiledGraph
+from langgraph.prebuilt import create_react_agent
 
-
-from app.agents.research_agent.prompts import (
-    RESEARCH_AGENT_PROMPT,
-)
+from app.agents.research_agent.constants import AGENT_NAME, AGENT_PROMPT_NAME
 from app.agents.research_agent.tools import (
+    get_gplaces_search_tool,
     get_kakao_search_tool,
     get_tavily_search_tool,
     get_wikipedia_tool,
-    get_gplaces_search_tool,
 )
+from app.utils.langsmith_manger import LangSmithManager
+
+_langsmith_manager = LangSmithManager()
 
 
 def get_research_agent(
@@ -19,8 +19,14 @@ def get_research_agent(
 ) -> CompiledGraph:
     return create_react_agent(
         model=llm,
-        tools=[get_kakao_search_tool(), get_tavily_search_tool(), get_wikipedia_tool(), get_gplaces_search_tool()],
-        prompt=RESEARCH_AGENT_PROMPT,
+        tools=[
+            get_kakao_search_tool(),
+            get_tavily_search_tool(),
+            get_wikipedia_tool(),
+            get_gplaces_search_tool(),
+        ],
+        prompt=_langsmith_manager.get_agent_prompt(AGENT_PROMPT_NAME),
+        name=AGENT_NAME,
     )
 
 

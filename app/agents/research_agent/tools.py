@@ -104,7 +104,7 @@ def get_kakao_search_tool() -> Tool:
 def wikipedia_search_sync(query: Annotated[str, "query for wikipedia search"]) -> List[Document]:
     try:
         retriever = WikipediaRetriever(top_k_results=3, lang="ko")
-        return retriever.get_relevant_documents(query)
+        return retriever.invoke(query)
     except Exception as e:
         return [{"error": f"Wikipedia search error: {str(e)}"}]
 

@@ -53,8 +53,11 @@ GREETING_MESSAGE = """
 선택하지 않으면 기본 모델이 사용되며, 대화 중에도 언제든 변경할 수 있습니다.
 """
 MODEL_LOADING_ERROR_MESSAGE = """
-### 😥 모델을 불러오는 중 문제가 발생했어요.
+#### 😥 모델을 불러오는 중 문제가 발생했어요.
 
 지금 선택된 모델 대신,  
 왼쪽 사이드바에서 **다른 모델을 선택**해 주세요!
 """
+THINKING_MESSAGE = "🤔 생각 중..."
+MODEL_INITIALIZING_MESSAGE = "🤖 모델 초기화 중..."
+MODEL_SETTING_MESSAGE = "✅ 모델 설정 완료!"

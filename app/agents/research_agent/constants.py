@@ -1,3 +1,6 @@
+AGENT_PROMPT_NAME = "research_agent"
+AGENT_NAME = "research_agent"
+
 KAKAO_LOCAL_SEARCH_URL = "https://dapi.kakao.com/v2/local/search/keyword.json"
 KAKAO_LOCAL_SEARCH_TOOL_NAME = "kakao_local_search"
 KAKAO_LOCAL_SEARCH_TOOL_DESCRIPTION = "국내 장소를 검색하고 상세 정보를 조회합니다."

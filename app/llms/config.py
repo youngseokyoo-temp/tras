@@ -8,28 +8,24 @@ class ModelConfig:
     """Model configuration"""
     provider: str
     model_name: str
-    max_tokens: int
-    temperature: float = 0.7
+    temperature: float = 0.5
 
 # OpenAI Model Configs
 CHATGPT_MODELS = OrderedDict({
-    "GPT-4o": ModelConfig(
+    "GPT-4o-mini": ModelConfig(
         provider="openai",
-        model_name="gpt-4o",
-        max_tokens=128000,
-        temperature=0.7,
+        model_name="gpt-4o-mini",
+        temperature=0.5,
     ),
     "GPT-4.1-mini": ModelConfig(
         provider="openai",
         model_name="gpt-4.1-mini",
-        max_tokens=1047576,
-        temperature=0.7,
+        temperature=0.5,
     ),
-    "GPT-4o-mini": ModelConfig(
+    "GPT-4o": ModelConfig(
         provider="openai",
-        model_name="gpt-4o-mini",
-        max_tokens=128000,
-        temperature=0.7,
+        model_name="gpt-4o",
+        temperature=0.5,
     ),
 })
 
@@ -38,20 +34,17 @@ ANTHROPIC_MODELS = OrderedDict({
     "Claude-3-Opus": ModelConfig(
         provider="anthropic",
         model_name="claude-3-opus-20240229",
-        max_tokens=200000,
-        temperature=0.7,
+        temperature=0.5,
     ),
     "Claude-3-Sonnet": ModelConfig(
         provider="anthropic",
         model_name="claude-3-sonnet-20240229",
-        max_tokens=200000,
-        temperature=0.7,
+        temperature=0.5,
     ),
     "Claude-3-Haiku": ModelConfig(
         provider="anthropic",
         model_name="claude-3-haiku-20240307",
-        max_tokens=200000,
-        temperature=0.7,
+        temperature=0.5,
     )
 })
 
@@ -60,20 +53,17 @@ GEMINI_MODELS = OrderedDict({
     "Gemini 1.5 Pro": ModelConfig(
         provider="google",
         model_name="gemini-1.5-pro-latest",
-        max_tokens=2097152,
-        temperature=0.7,
+        temperature=0.5,
     ),
     "Gemini 2.0 Flash": ModelConfig(
         provider="google",
         model_name="gemini-1.5-flash-latest",
-        max_tokens=1048576,
-        temperature=0.7,
+        temperature=0.5,
     ),
     "Gemini 1.5 Flash": ModelConfig(
         provider="google",
         model_name="gemini-1.5-flash-latest",
-        max_tokens=1048576,
-        temperature=0.7,
+        temperature=0.5,
     ),
 })
 
@@ -83,13 +73,13 @@ AVAILABLE_MODELS: Dict[str, Dict[str, ModelConfig]] = {
     "Google - Gemini": GEMINI_MODELS
 }
 
-def get_model_versions(provider: str) -> List[str]:
+def get_model_versions(model_provider: str) -> List[str]:
     """Return all model versions for a given provider"""
-    return list(AVAILABLE_MODELS.get(provider, {}).keys())
+    return list(AVAILABLE_MODELS.get(model_provider, {}).keys())
 
-def get_model_config(provider: str, version: str) -> ModelConfig:
+def get_model_config(model_provider: str, model_version: str) -> ModelConfig:
     """Return the configuration for a given model"""
-    provider_models = AVAILABLE_MODELS.get(provider, {})
-    if version not in provider_models:
-        raise ValueError(f"Unsupported model: {provider}/{version}")
-    return provider_models[version] 
+    provider_models = AVAILABLE_MODELS.get(model_provider, {})
+    if model_version not in provider_models:
+        raise ValueError(f"Unsupported model: {model_provider}/{model_version}")
+    return provider_models[model_version] 

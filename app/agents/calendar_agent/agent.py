@@ -1,17 +1,19 @@
-from langgraph.prebuilt import create_react_agent
 from langchain_core.language_models import BaseChatModel
 from langgraph.graph.graph import CompiledGraph
+from langgraph.prebuilt import create_react_agent
 
+from app.agents.calendar_agent.constants import AGENT_NAME, AGENT_PROMPT_NAME
 from app.agents.calendar_agent.tools import (
     get_calendar_create_event_tool,
     get_calendar_delete_event_tool,
-    get_calendar_update_event_tool,
-    get_current_datetime_tool,
     get_calendar_search_events_tool,
+    get_calendar_update_event_tool,
     get_calendars_info_tool,
+    get_current_datetime_tool,
 )
-from app.agents.calendar_agent.prompts import CALENDAR_AGENT_PROMPT
+from app.utils.langsmith_manger import LangSmithManager
 
+_langsmith_manager = LangSmithManager()
 
 def get_calendar_agent(
     llm: BaseChatModel,
@@ -23,7 +25,7 @@ def get_calendar_agent(
 
     Returns:
         CompiledGraph: Generated calendar agent
-    """
+        """
     return create_react_agent(
         model=llm,
         tools=[
@@ -34,7 +36,8 @@ def get_calendar_agent(
             get_calendar_search_events_tool(),
             get_calendars_info_tool(),
         ],
-        prompt=CALENDAR_AGENT_PROMPT,
+        prompt=_langsmith_manager.get_agent_prompt(AGENT_PROMPT_NAME),
+        name=AGENT_NAME,
     )
 
 
