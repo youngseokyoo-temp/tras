@@ -18,6 +18,7 @@ from app.utils.ui_constants import (
     THINKING_MESSAGE,
 )
 from app.supervisor.constants import SUPERVISOR_NAME
+from app.utils.callbacks import LoggingCallback
 
 # Page Config
 st.set_page_config(
@@ -71,7 +72,8 @@ if chat_input:
             message_placeholder = st.empty()
             for chunk, metadata in chatbot.stream(
                 {"messages": [{"role": "user", "content": chat_input}]},
-                config={"configurable": {"thread_id": session_id}},
+                config={"configurable": {"thread_id": session_id},
+                        "callbacks": [LoggingCallback(session_id)]},
                 stream_mode="messages",
             ):
                 if metadata["langgraph_node"] == SUPERVISOR_NAME:

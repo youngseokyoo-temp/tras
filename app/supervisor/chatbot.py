@@ -1,25 +1,29 @@
 from typing import Annotated
 
 from langchain_core.language_models import BaseChatModel
+from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.checkpoint.base import Checkpoint
+from langgraph.graph import END, START
 from langgraph.graph.graph import CompiledGraph
-from langgraph.graph import START, END
 from langgraph.graph.message import MessagesState, StateGraph
 from langgraph.prebuilt import InjectedState
 from langgraph.types import Command
-from langchain_core.tools import tool, InjectedToolCallId
-from app.utils.create_react_agent import create_react_agent
+from langmem.short_term import SummarizationNode
 
 from app.agents.calendar_agent.agent import get_calendar_agent
-from app.agents.planner_agent.agent import get_planner_agent
-from app.agents.research_agent.agent import get_research_agent
-from app.agents.twitter_agent.agent import get_twitter_agent
-from app.agents.research_agent.constants import AGENT_NAME as RESEARCH_AGENT_NAME
-from app.agents.planner_agent.constants import AGENT_NAME as PLANNER_AGENT_NAME
 from app.agents.calendar_agent.constants import AGENT_NAME as CALENDAR_AGENT_NAME
+from app.agents.planner_agent.agent import get_planner_agent
+from app.agents.planner_agent.constants import AGENT_NAME as PLANNER_AGENT_NAME
+from app.agents.research_agent.agent import get_research_agent
+from app.agents.research_agent.constants import AGENT_NAME as RESEARCH_AGENT_NAME
+from app.agents.twitter_agent.agent import get_twitter_agent
 from app.agents.twitter_agent.constants import AGENT_NAME as TWITTER_AGENT_NAME
-from app.supervisor.constants import SUPERVISOR_NAME
-from app.supervisor.prompts import SUPERVISOR_PROMPT
+from app.supervisor.constants import MAX_SUMMARY_TOKENS, SUPERVISOR_NAME, SUPERVISOR_PROMPT_NAME
+from app.utils.create_react_agent import create_react_agent
+from app.utils.langsmith_manger import LangSmithManager
+from app.supervisor.hooks import guard_using_llamaguard
+
+_langsmith_manager = LangSmithManager()
 
 
 def create_handoff_tool(*, agent_name: str, description: str | None = None):
@@ -65,37 +69,46 @@ def get_supervisor_chatbot(
     calendar_agent = get_calendar_agent(llm)
     twitter_agent = get_twitter_agent(llm)
 
-    #Handoffs
+    # Handoffs
     assign_to_research_agent = create_handoff_tool(agent_name=RESEARCH_AGENT_NAME)
     assign_to_planner_agent = create_handoff_tool(agent_name=PLANNER_AGENT_NAME)
     assign_to_calendar_agent = create_handoff_tool(agent_name=CALENDAR_AGENT_NAME)
     assign_to_twitter_agent = create_handoff_tool(agent_name=TWITTER_AGENT_NAME)
 
-    supervisor_agent = create_react_agent(
+    # History Summarization
+    summarization_node = SummarizationNode(
         model=llm,
-        tools=[assign_to_planner_agent, assign_to_research_agent, assign_to_calendar_agent, assign_to_twitter_agent],
-        prompt=SUPERVISOR_PROMPT,
-        name=SUPERVISOR_NAME,
+        max_tokens=MAX_SUMMARY_TOKENS,
+        token_counter=llm.get_num_tokens_from_messages,
     )
 
-    # return create_supervisor(
-    #     model=supervisor_llm,
-    #     agents=[
-    #         get_planner_agent(llm),
-    #         get_research_agent(llm),
-    #         get_calendar_agent(llm),
-    #         get_twitter_agent(llm),
-    #     ],
-    #     prompt=SUPERVISOR_PROMPT,
-    #     add_handoff_back_messages=False,
-    #     supervisor_name=SUPERVISOR_NAME,
-    #     output_mode="last_message",
-    # ).compile(checkpointer=checkpointer)
-
+    supervisor_agent = create_react_agent(
+        model=llm,
+        tools=[
+            assign_to_planner_agent,
+            assign_to_research_agent,
+            assign_to_calendar_agent,
+            assign_to_twitter_agent,
+        ],
+        prompt=_langsmith_manager.get_agent_prompt(SUPERVISOR_PROMPT_NAME),
+        name=SUPERVISOR_NAME,
+        pre_model_hook=summarization_node,
+        post_model_hook=guard_using_llamaguard,
+    )
 
     return (
         StateGraph(MessagesState)
-        .add_node(SUPERVISOR_NAME, supervisor_agent, destinations=(RESEARCH_AGENT_NAME, PLANNER_AGENT_NAME, CALENDAR_AGENT_NAME, TWITTER_AGENT_NAME) + (END,))
+        .add_node(
+            SUPERVISOR_NAME,
+            supervisor_agent,
+            destinations=(
+                RESEARCH_AGENT_NAME,
+                PLANNER_AGENT_NAME,
+                CALENDAR_AGENT_NAME,
+                TWITTER_AGENT_NAME,
+            )
+            + (END,),
+        )
         .add_node(RESEARCH_AGENT_NAME, research_agent)
         .add_node(PLANNER_AGENT_NAME, planner_agent)
         .add_node(CALENDAR_AGENT_NAME, calendar_agent)
@@ -107,3 +120,10 @@ def get_supervisor_chatbot(
         .add_edge(TWITTER_AGENT_NAME, SUPERVISOR_NAME)
         .compile(checkpointer=checkpointer)
     )
+
+
+if __name__ == "__main__":
+    from langchain_openai import ChatOpenAI
+    from IPython.display import display, Image
+    chatbot = get_supervisor_chatbot(llm=ChatOpenAI(model="gpt-4o-mini"), checkpointer=None)
+    display(Image(chatbot.get_graph().draw_mermaid_png(output_file_path="supervisor.png")))

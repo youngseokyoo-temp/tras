@@ -1,4 +1,4 @@
-AGENT_PROMPT_NAME = "planner_agent"
+AGENT_PROMPT_NAME = "tras/planner_agent"
 AGENT_NAME = "planner_agent"
 
 NAVER_BLOG_SEARCH_URL = "https://openapi.naver.com/v1/search/blog.json"

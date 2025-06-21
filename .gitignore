@@ -5,3 +5,5 @@ logs/
 .cursor/
 token.json
 credentials.json
+secret.json
+uv.lock

@@ -657,7 +657,6 @@ def create_react_agent(
     workflow = StateGraph(state_schema or AgentState, config_schema=config_schema)
 
     # Define the two nodes we will cycle between
-    print(name)
     workflow.add_node(name, RunnableCallable(call_model, acall_model), input=input_schema)
     workflow.add_node("tools", tool_node)
 

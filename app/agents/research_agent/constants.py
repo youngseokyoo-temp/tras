@@ -1,4 +1,4 @@
-AGENT_PROMPT_NAME = "research_agent"
+AGENT_PROMPT_NAME = "tras/research_agent"
 AGENT_NAME = "research_agent"
 
 KAKAO_LOCAL_SEARCH_URL = "https://dapi.kakao.com/v2/local/search/keyword.json"
