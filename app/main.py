@@ -17,6 +17,7 @@ from app.utils.ui_constants import (
     PROJECT_TITLE,
     THINKING_MESSAGE,
 )
+from app.supervisor.constants import SUPERVISOR_NAME
 
 # Page Config
 st.set_page_config(
@@ -57,6 +58,7 @@ logger = get_logger(session_id)
 print_greeting_message()
 print_messages()
 chat_input = st.chat_input(CHAT_INPUT_PLACEHOLDER)
+
 if chat_input:
     print_message(chat_input, "user")
 
@@ -72,7 +74,7 @@ if chat_input:
                 config={"configurable": {"thread_id": session_id}},
                 stream_mode="messages",
             ):
-                if metadata["langgraph_node"] == "agent":
+                if metadata["langgraph_node"] == SUPERVISOR_NAME:
                     response += chunk.content
                     message_placeholder.markdown(response)
             save_message(response, "assistant")

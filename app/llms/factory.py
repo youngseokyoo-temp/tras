@@ -12,9 +12,7 @@ class LLMFactory:
 
     def get_llm(self, provider: str, version: str, **kwargs) -> BaseChatModel:
         """Get an LLM instance from the factory"""
-        # kwargs를 정렬된 문자열로 변환하여 cache key에 포함
-        kwargs_str = "_".join([f"{k}_{v}" for k, v in sorted(kwargs.items())])
-        cache_key = f"{provider}_{version}_{kwargs_str}" if kwargs_str else f"{provider}_{version}"
+        cache_key = f"{provider}_{version}"
         if cache_key in self._cache:
             return self._cache[cache_key]
 
@@ -37,7 +35,7 @@ class LLMFactory:
     def _create_openai_llm(self, config: ModelConfig, **kwargs):
         """Create an OpenAI LLM instance from the factory"""
         from langchain_openai import ChatOpenAI
-        
+
         return ChatOpenAI(
             model=config.model_name,
             temperature=kwargs.get("temperature", config.temperature),

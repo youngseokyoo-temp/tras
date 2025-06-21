@@ -40,19 +40,12 @@ def get_chatbot(model_provider: str, model_version: str, temperature: float, log
                 version=model_version,
                 temperature=temperature,
             )
-            llm_worker = get_llm_instance(
-                log=logger,
-                provider=model_provider,
-                version=model_version,
-                temperature=temperature,
-                streaming=False,
-            )
 
             if not llm:
                 st.error(MODEL_LOADING_ERROR_MESSAGE)
                 st.stop()
 
-            st.session_state.chatbot = get_supervisor_chatbot(llm, llm_worker, get_session_checkpointer()).with_config(tags=["supervisor"])
+            st.session_state.chatbot = get_supervisor_chatbot(llm, get_session_checkpointer())
             st.session_state.model_config = current_config
 
         st.success(MODEL_SETTING_MESSAGE)

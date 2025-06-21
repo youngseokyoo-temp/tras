@@ -28,7 +28,6 @@ dependencies = [
     "langchain-openai>=0.3.24",
     "langchain-tavily>=0.2.3",
     "langgraph>=0.4.8",
-    "langgraph-supervisor>=0.0.27",
     "markdown>=3.8.2",
     "oauthlib>=3.3.0",
     "playwright>=1.52.0",
