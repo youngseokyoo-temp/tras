@@ -115,14 +115,6 @@ LOGS_DIR = ""
 TRAS는 5개의 전문 AI 에이전트가 협력하여 복잡한 여행 계획 업무를 수행합니다.
 모든 에이전트는 ReAct (Reasoning + Acting) 구조를 채택하여 다음과 같은 사고 과정을 거칩니다.
 
-
-
-에이전트들은 Supervisor 패턴을 통해 체계적으로 협력합니다:
-
-요청 분석: Supervisor가 사용자 요청을 분석하고 적절한 에이전트 선택  
-순차 실행: 각 에이전트가 전문 영역에서 최적의 결과 도출  
-결과 통합: Supervisor가 모든 결과를 종합하여 일관된 응답 제공
-
 research_agent의 흐름 (예시)
 
 * Thought: 사용자가 제주도 3박 4일 여행을 원한다. 먼저 제주도 관광지 정보를 조사해야 한다.
@@ -130,6 +122,15 @@ research_agent의 흐름 (예시)
 * Observation: 성산일출봉, 한라산, 우도 등 주요 관광지 정보 수집 완료
 * Thought: 이제 실제 여행 후기를 확인해서 생생한 정보를 얻어보자.
 * Action: naver_blog_search("제주도 3박4일 여행 후기")
+
+[img]
+
+에이전트들은 Supervisor 패턴을 통해 체계적으로 협력합니다:
+
+요청 분석: Supervisor가 사용자 요청을 분석하고 적절한 에이전트 선택  
+순차 실행: 각 에이전트가 전문 영역에서 최적의 결과 도출  
+결과 통합: Supervisor가 모든 결과를 종합하여 일관된 응답 제공
+
 
 직접 구현한 Tool의 함수들은 에이전트의 동기/비동기 구동을 모두 지원하기 위해 각각 `sync`, `async` 함수를 따로 지원하였습니다.
 
@@ -315,53 +316,149 @@ TRAS는 LLM의 응답 신뢰성과 서비스 안정성을 확보하기 위해 Gu
 
 그림의 각 Component에 대한 설명은 아래와 같습니다.
 
-* `Web Server` .
+* `Web Server` 
 
 웹 서버로 간단한 정적 파일 제공 및 Frontend로 리버스 프록시 처리, HTTPS 인증서(TLS)를 관리합니다.
 
 * `Frontend`
 
-사용자 입력 기반 챗 인터페이스를 UI로 제공합니다. 
+사용자 입력 기반 챗 인터페이스를 포함한 UI 서비스 제공합니다. 백엔드와 REST API 및 스트리밍을 위한 WebSocket 통신을 합니다.
 
 * `Backend(Langgraph)`
 
-멀티 에이전트의 요청을 받아
+요청을 받아 Langgraph 상태 기반 멀티 에이전트 워크플로우를 구동하여 결과를 제공합니다. 
 
 * `Vectorstore`
 
+여행 관련 지식 기반(장소 정보, 여행 관련 후기 등)을 모델이 Retrieval 할 수 있도록 벡터 형태로 저장합니다.
+
 * `In Memory DB/Queue`
 
-* `Database`:
+사용자 세션을 관리하고 비동기 작업을 Task Workers 에게 큐로 전달합니다.
 
-* `Task workers`:
+* `Database`
+
+사용자의 정보(여행 패턴 등)와 대화 내역 등 영속 데이터들을 저장합니다.
+
+* `Task workers`
+
+Task Queue로 부터 받은 비동기 작업을 (오래된 대화 내용 제거, 여행 관련 정보 크롤링 및 Vectorstore 저장 등) 지속적으로 진행합니다.
 
 * `LLMops`
 
+에이전트에 활용될 fine-tuned LLM 모델, LLM API가 동작하지 않을 경우 백업 모델, 가드레일을 위한 경량화 모델 등을 관리합니다.
+
 * `Monitoring`
+
+에러 및 인프라 상의 각종 로그들을 수집하고 모니터링하는 운영자에게 실시간으로 제공합니다.
 
 * `Deployment`
 
+개발자의 변경 사항을 파악하여 새롭게 이미지를 빌드하고 클러스터 환경에서 변경사항을 적용합니다.
+
 * `Image Registry`
 
+어플리케이션 배포에 필요한 각종 이미지들을 버전별로 저장하고 관리합니다.
+
 * `Agent Monitor`
+
+에이전트의 상세 흐름을 저장하고 모니터링 합니다.
 
 * `Prompt Hub`
 
-* `Agent Monitor`
-
-* `Prompt Hub`:
+에이전트에 사용되는 각종 프롬프트들을 버전별로 저장하고 관리합니다.
 
 * `LLM API`
 
+OpenAI의 ChatGPT, Google의 Gemini, Anthropic의 Claude 모델 등 API를 호출하여 LLM 모델을 사용합니다.
+
 * `External API`
+
+여행 관련 정보를 모으고, 사용자의 여행 일정을 등록하고, 외부에 공유하는 OpenAPI를 사용합니다.
 
 ### Flows
 
+아래는 실제 서비스에서 발생할 수 있는 각 Component별 부분적인 흐름에 대한 묘사입니다.
 
+**Service FLow**
+
+`User` -> `Web Server` -> `Frontend` -> `Backend`
+
+사용자의 요청을 받은 웹 서버는 Frontend는 페이지를 제공합니다. 페이지로부터 요청을 받은(CSR) Backend는 멀티 에이전트를 호출합니다.
+
+`Backend` -> `In Memory DB and Database` 
+
+Backend는 DB들로부터 사용자 정보, 현재 세션, 지금까지의 대화 내용에 대한 정보를 받습니다. 
+
+`Backend` -> `In Memory DB & PromptHub`
+
+Backend는 In Memory DB에서 필요한 최신 프롬프트를 가져옵니다. 만약 존재하지 않는다면 PromptHub에서 가져온 뒤, In Memory DB에 넣어줍니다.
+
+`Backend` -> `In Memory DB & Vectorstore`
+
+Backend는 필요한 여행 정보를 In Memory DB에서 정해진 Key를 활용하여 찾습니다. 없을 경우 Vectorstore에서 Retrieval 한 뒤, 마찬가지로 In Memory DB에 넣어줍니다.
+
+`Backend` -> `LLMops or LLM API`
+
+멀티 에이전트는 Fine-tuned된 자체 LLM이나 외부 LLM API를 호출하여 에이전트를 구동시킵니다. 모델의 응답을 받은 후에는 이를 자체 가드레일 LLM을 활용하여 검증합니다.
+
+`Backend` -> `External API`
+
+필요한 경우, Open API를 활용하여 정보를 가져오거나 사용자의 요청을 수행합니다.
+
+`Backend -> Agent Monitor`
+
+멀티 에이전트의 흐름을 Agent Monitor에 기록하여 운영자가 에이전트를 확인하고 점검할 수 있도록 합니다.
+
+`Queue -> Task Workers`
+
+주기적인 대화 내용 관리 등 오래 걸릴 수 있는 task들은 비동기 큐에 할당하여 worker들이 이를 받아 작업할 수 있도록 합니다.
+
+**Monitoring Flow**
+
+`Kubernetes Manger + Available Components`
+
+(Logstash, Kibana 기준)
+쿠버네티스 클러스터 및 서비스 전체에서 발생하는 로그는 모두 중앙 로그 수집기로 전송됩니다. 수집기는 다양한 로그를 파싱 및 필터링하여 적절한 메타데이터와 함께 Kibana로 전달합니다. 운영자는 Kibana를 통해 지표를 시각화하여 모니터링합니다.
+
+**Dev Flow**
+
+(Jenkins, argoCD 기준)
+
+개발자가 로컬에서 코드를 수정한 뒤 올린 커밋에 main 브랜치에 반영되면 Git에 저장된 Webhook이 Jenkins에 요청을 보냅니다.  
+-> Jenkins는 이를 감지하고, clone 한 뒤, 각종 테스트를 실행하여 결과를 반환합니다. 테스트가 통과되면 이미지를 빌드하고 레지스트리에 Push 합니다.  
+-> Argo CD는 이미지 태크 변경을 감지하고 새로운 manifest를 참조하여 클러스터의 앱을 (롤링) 업데이트 합니다.
 
 ## 🛡️ Continous Validation
 
+LLM의 응답은 예측이 어렵기 때문에 시스템 출시 후에도 응답 품질을 지속적으로 측정하고 개선하는 LLMOps 체계를 구축해야 합니다. 
+이를 위해 도메인 전문가들과 함께 정량적인 데이터셋을 각 agent별로 구축해야 합니다. 아래는 제가 생각하는 데이터셋의 예시입니다.
 
+**supervisor**
+
+사용자에 요청에 맞게 각 하위 에이전트 호출하는 지 테스트합니다. 아래는 예시입니다.
+* 이번 여름에 프랑스에 갈건데 여행지 추천해줘 -> research agent 호출  
+* 파리에는 1박 2일 정도 있을 건데 일정좀 세워줄래? -> planner agent 호행  
+* 프랑스 여행에 캘린더에 등록해줘 -> calendar agent 호출  
+* 이 여행 일정을 내 SNS에다가 공유해줄래? -> twitter agent 호출
+
+**agents**
+
+supervisor의 요쳥에 맞게 적절한 tool을 호출하는지 테스트 합니다. 아래는 예시입니다.
+* 제주도 당일치기 일정 좀 세워줘 -> kakao Local API 호출
+* SNS에 공유했던 여행 일정은 지워줘 -> Twitter Delete API 호출
+
+뿐만 아니라, 조금 더 세부적으로 `Relevancy` 테스트를 할 수 있습니다. 아래는 예시입니다.
+
+* Vectorstore와 Expected Document를 주고 Retrieval을 잘 수행하는지
+* planner agent에게 여행지와 관련없는 글이 포함된 N개의 블로그 글 Set를 제공하고 필요한 글만 content를 loading 하는지 
+
+조금 더 정교한 테스트를 위해서는 아래와 같은 데이터셋을 제공할 수 있습니다.
+
+* 여행지가 주어졌을 때 기대되는 실제 명소들이 포함되는지 (예 - 제주도 3박 4일 -> 성산 일출봉 포함 유무)
+* 일정에서 각 나라마다 주어진 활동이 너무 적지는 않은지 (예 - 하루 2개 미만)
+
+이를 토대로 주기적으로 (하루에 한 번씩) 돌아가는 `Cron` 시스템을 만들어 점수를 모니터링 합니다.
 
 ## 🔧 Dev Tools
 
@@ -391,6 +488,11 @@ TRAS는 LLM의 응답 신뢰성과 서비스 안정성을 확보하기 위해 Gu
 * Prompt: 그 때마다 Prompt Hub 에서 pull 하는 것은 I/O 적으로 매우 비효율적이라고 생각합니다. 이를 위해 서버 내에 프롬프트 세트를 저장(캐싱)해두고 이를 주기적으로, 더 이상적으로 새로운 버전이 commit 되었을 경우 교체하면 보다 빠른 프롬프트 세팅이 될 것 같습니다.
 * Unit Test: 코드 함수에 대한 각각의 Unit TC를 추가하여 코드 정확성을 유지하는 것이 좋습니다.
 * History: 대화 히스토리를 관리하는 것을 대화가 없을 때 비동기 기반 큐 시스템으로 독립적으로 유지하는 것이 응답 속도를 최적화하는 데 도움이 될 것이라 생각합니다. 
+
+### LLM Level (Reflection)
+
+* Prompt: 이번 프로젝트를 진행하면서 시스템 프롬프트의 중요성을 많이 느낄 수 있었습니다. 프롬프트에 들어가는 한 문장, 한 글자가 모델의 출력에 적지 않은 영향을 미치는 것을 확인했습니다. 
+* Graph: 에이전트끼리의 인터페이스를 더 견고하게 맞추어야 할 것입니다. '에이전트' 라는 개념을 깨지 않는 수준에서 각 에이전트끼리의 연결을 더 단단히 한다면 보다 안정적인 시스템이 될 것입니다.
 
 ### UX Level
 
@@ -426,7 +528,3 @@ TRAS는 LLM의 응답 신뢰성과 서비스 안정성을 확보하기 위해 Gu
 ![twitter_mongol](https://github.com/user-attachments/assets/fafd07b3-71a7-4d70-a42b-3abaccbe8fa8)
 ![twitter_sanghai](https://github.com/user-attachments/assets/2fac3bad-cf91-473b-b7bf-3c3586161020)
 ![twitter_sanghai_del](https://github.com/user-attachments/assets/42a3d1af-007e-4a5b-8297-8f2442ac8942)
-
-
-
-
