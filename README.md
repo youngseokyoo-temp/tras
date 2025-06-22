@@ -248,7 +248,23 @@ streamlit은 매 이벤트마다 스크립트를 다시 불러오는 치명적�
 
 2. **Streaming - create_react_agent**
 
-의외로 이번 프로젝트에서 복병이였던 부분이 스트리밍이었습니다.
+의외로 이번 프로젝트에서 복병이였던 부분이 스트리밍이었습니다. 전체 Multi-agent 시스템을 만든 뒤, 토큰 별 스트리밍을 위해 stream_mode를 messages로 하여 스트리밍 하고 이를 UI와 연결하였습니다. 허나 문제는 스트리밍이 모든 LLM의 출력에 대하여 나온다는 것이었습니다. 이 시스템에는 모델(에이전트)가 총 5개가 있고, 보통 `supervisor - {sub-agent}` 의 흐름을 가지고 있기에 스트리밍도 sub-agent의 출력까지 비슷한(또는 같은) 출력이 연속해서 두 번 스트리밍 되어 써졌습니다. 따라서 아래와 같은 방법들을 고안/시도 해보았습니다.
+
+* sub-agent에 streaming 모드가 disable된 llm 인스턴스를 새로 할당 -> 실패
+* supervisor 앞에 echo 노드를 사용해서 분리 시도 -> 실패
+* invoke가 끝난 후 가상으로 스트리밍 시뮬레이션 -> 근본적으로, 스트리밍이라고 볼 수 없음.
+
+### ✨ 내가 적용한 해결책 ✨ 
+
+먼저, streaming의 결과를 분석해 보았습니다. stream_mode를 messages로 하면 chunk와 metadata가 존재하는 metadata에 `langgraph_node` 라는 필드가 존재합니다. 이는 해당 LLM이 돌아가는 노드의 이름을 나타냅니다. 이 값이 전부다 **agent**라는 동일한 값으로 chunk를 반환했습니다.
+
+저는 초기에 agent는 `create_react_agent`, supervisor는 `create_supervisor` 이라는 라이브러리 함수를 사용했습니다. 분명 제가 직접 ReAct 에이전트를 구상하는 것보다 품질이 보장되고 안정적일 것입니다. 그런데 이 create_react_agent 함수를 직접 들어가서 확인해보니, LLM 노드의 이름이 **agent**로 하드코딩 되어 있었습니다.
+
+[creaet_reac_img]
+
+물론, 이렇게 동작하도록 한 이유는 있었을 겁니다.(유명하고 보증된 라이브러리라면 더더욱) 하지만, 이것은 적어도 이 프로젝트에서 제가 원하는 방향은 아니었습니다. 이렇게 되면 이 시스템과 같이 **Multi-agent** 시스템에서 에이전트를 `create_react_agent`로 생성하였을 경우, **노드 단위**로는 에이전트를 구분할 수 없게 됩니다. `name` 파라미터로 에이전트가 구분되기를 기대했던 저는 이 라이브러리 함수를 그대로 `utils` 로 가져와 노드의 이름을 name 파라미터로 수정한 `create_react_agent` 함수를 생성하였습니다. 물론, 이렇게 코드를 통째로 가져오는 방식이 이상적이라고 할 수는 없지만 정해진 기한 내에 원하는 동작을 빠르게 유도하고자 적용하였습니다. 이를 통해 저는 스트리밍 시 chunk의 메타 데이터로 supervisor 응답만을 구분하여 스트리밍 할 수 있었습니다한
+
+TMI) 여전히 이 문제에 대한 간편한 해결책은 없는 듯합니다. 참고: https://github.com/langchain-ai/langgraph/issues/137, https://www.reddit.com/r/LangChain/comments/1d54v75/how_to_stream_the_last_message_final_response_in/?onetap_auto=true&one_tap=true
 
 3. **Logging**
 
@@ -292,12 +308,62 @@ TRAS는 LLM의 응답 신뢰성과 서비스 안정성을 확보하기 위해 Gu
 
 * History Summary: 대화 내용에 대한 히스토리가 계속해서 쌓이면 모델의 입력에 문제가 발생하기 때문에 이를 관리해주는 것이 필요합니다. 이를 위해 챗봇에 들어가기 전 `pre_model_hook` 을 통해 오래된 대화 내용을 요약하여 전체 context를 유지하도록 하였습니다.
 
-## Production Architecture
+## 🏛️ Production Architecture
+
+[architecture img]
+
+멀티 에이전트 기반 여행 일정 서비스의 아키텍처의 각 요소와 그 흐름을 소개합니다.
+위 아키텍처의 각 요소들의 플랫폼(그림)은 에시일 뿐, 고정되지 않습니다.
+
+### Components
+
+그림의 각 Component에 대한 설명은 아래와 같습니다.
+
+* `Web Server` .
+
+웹 서버로 간단한 정적 파일 제공 및 Frontend로 리버스 프록시 처리, HTTPS 인증서(TLS)를 관리합니다.
+
+* `Frontend`
+
+사용자 입력 기반 챗 인터페이스를 UI로 제공합니다. 
+
+* `Backend(Langgraph)`
+
+멀티 에이전트의 요청을 받아
+
+* `Vectorstore`
+
+* `In Memory DB/Queue`
+
+* `Database`:
+
+* `Task workers`:
+
+* `LLMops`
+
+* `Monitoring`
+
+* `Deployment`
+
+* `Image Registry`
+
+* `Agent Monitor`
+
+* `Prompt Hub`
+
+* `Agent Monitor`
+
+* `Prompt Hub`:
+
+* `LLM API`
+
+* `External API`
+
+### Flows
 
 
 
-## Continous Validation
-
+## 🛡️ Continous Validation
 
 
 
@@ -309,7 +375,7 @@ TRAS는 LLM의 응답 신뢰성과 서비스 안정성을 확보하기 위해 Gu
 
 > FYI
 
-Cursor IDE 회고
+**Cursor IDE 회고**
 
 코드를 이어나가거나 간단한(네이밍/변수 분리 등) 수정 사항을 이어나갈 때는 Tab 자동 완성 기능을 사용하여 Typing 시간을 줄여 생산성이 증가하였습니다. Agent 모드는 거의 사용하지 않았습니다. Agent 모드를 사용하면 확실히 원하는 기능을 뚝딱 만들기는 하지만, 제 자신의 입맛에 맞게끔 개발을 해주는 느낌은 아니었습니다. 또한 AI의 코드를 자신이 이해해야 하는 상황이 발생해 추후에 다른 모듈 및 컴포넌트들과 연결이 용이하지 않았습니다. 따라서, 저는 필요한 경우는 Cmd + K 의 partial agent를 활용하고 대부분은 일반 챗봇인 Ask 기능을 활용하였습니다. Ask 기능을 통해 나온 내용을 확인하고 유용한 것은 부부적으로 골라 코드에 반영하였습니다. 
 
@@ -337,22 +403,17 @@ Cursor IDE 회고
 
 ## Addtional Screenshots
 
-[img]
+### 여행지 추천
+
+
+### 여행 계획 수립
+
+
+### 여행 일정 관리
+
+
+### SNS 공유
 
 
 
-
-
-🚀
-
-🏗️
-
-🔧
-
-🌐
-
-🛡️
-
-
-🔄
 
