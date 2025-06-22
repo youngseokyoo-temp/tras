@@ -65,10 +65,15 @@ def guard_using_llamaguard(state):
             "role": "system",
             "content": GUARD_VIOLATION_SYSTEM_MESSAGE
         }
-        return Command(
-            goto=last_message.response_metadata["name"],
-            update={**state, "messages": state["messages"] + [system_message]},
-        )
+        
+        updated_state = {**state, "messages": state["messages"] + [system_message]}
+        if "name" in last_message.response_metadata:
+            return Command(
+                goto=last_message.response_metadata["name"],
+                update=updated_state,
+            )
+        else:
+            return updated_state
 
 
 if __name__ == "__main__":
