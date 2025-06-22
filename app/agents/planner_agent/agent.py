@@ -8,10 +8,7 @@ from app.agents.planner_agent.tools import (
     get_naver_cafe_search_tool,
     get_web_loader_tool,
 )
-from app.agents.research_agent.tools import (
-    get_gplaces_search_tool, 
-    get_kakao_search_tool
-)
+from app.agents.research_agent.tools import get_gplaces_search_tool, get_kakao_search_tool
 from app.utils.langsmith_manger import LangSmithManager
 
 _langsmith_manager = LangSmithManager()

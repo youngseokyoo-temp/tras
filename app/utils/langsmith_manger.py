@@ -38,7 +38,8 @@ class LangSmithManager:
             chat_prompt = self.client.pull_prompt(name, include_model=False)
             return chat_prompt.messages[0].format(**kwargs)
         except Exception as e:
-            raise RuntimeError(f"Failed to get prompt '{name}': {str(e)}")
+            print(f"Failed to get prompt '{name}': {str(e)}")
+            return SystemMessage(content=f"Failed to get prompt '{name}': {str(e)}")
 
     def reset_client(self):
         """Reset client (for testing)"""

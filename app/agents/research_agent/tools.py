@@ -2,12 +2,11 @@ from typing import Annotated, Dict, List
 
 import aiohttp
 import requests
-from langchain_core.tools import Tool, BaseTool
 from langchain_community.retrievers import WikipediaRetriever
+from langchain_core.documents import Document
+from langchain_core.tools import BaseTool, Tool
 from langchain_google_community import GooglePlacesTool
 from langchain_tavily import TavilySearch
-from langchain_core.documents import Document
-
 
 from app.agents.research_agent.constants import (
     KAKAO_LOCAL_SEARCH_TOOL_DESCRIPTION,

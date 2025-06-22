@@ -19,9 +19,9 @@ from app.agents.research_agent.constants import AGENT_NAME as RESEARCH_AGENT_NAM
 from app.agents.twitter_agent.agent import get_twitter_agent
 from app.agents.twitter_agent.constants import AGENT_NAME as TWITTER_AGENT_NAME
 from app.supervisor.constants import MAX_SUMMARY_TOKENS, SUPERVISOR_NAME, SUPERVISOR_PROMPT_NAME
+from app.supervisor.hooks import guard_using_llamaguard
 from app.utils.create_react_agent import create_react_agent
 from app.utils.langsmith_manger import LangSmithManager
-from app.supervisor.hooks import guard_using_llamaguard
 
 _langsmith_manager = LangSmithManager()
 
@@ -128,7 +128,7 @@ def get_supervisor_chatbot(
 
 
 if __name__ == "__main__":
+    from IPython.display import Image, display
     from langchain_openai import ChatOpenAI
-    from IPython.display import display, Image
     chatbot = get_supervisor_chatbot(llm=ChatOpenAI(model="gpt-4o-mini"), checkpointer=None)
     display(Image(chatbot.get_graph().draw_mermaid_png(output_file_path="supervisor.png")))

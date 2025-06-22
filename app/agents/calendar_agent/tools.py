@@ -1,15 +1,15 @@
-from app.utils.env_constants import GOOGLE_CREDENTIALS_PATH
-
 from langchain_core.tools import BaseTool
 from langchain_google_community import (
     CalendarCreateEvent,
     CalendarDeleteEvent,
-    CalendarUpdateEvent,
     CalendarSearchEvents,
+    CalendarUpdateEvent,
     GetCalendarsInfo,
     GetCurrentDatetime,
 )
-from langchain_google_community.calendar.utils import get_google_credentials, build_resource_service
+from langchain_google_community.calendar.utils import build_resource_service, get_google_credentials
+
+from app.utils.env_constants import GOOGLE_CREDENTIALS_PATH
 
 google_credentials = get_google_credentials(
     client_secrets_file=GOOGLE_CREDENTIALS_PATH,

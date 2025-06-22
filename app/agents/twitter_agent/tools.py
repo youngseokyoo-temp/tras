@@ -1,14 +1,15 @@
-from typing import Dict, Annotated
-from markdown import markdown
-from bs4 import BeautifulSoup
 import re
+from typing import Annotated, Dict
 
 import tweepy
+from bs4 import BeautifulSoup
+from langchain_core.tools import Tool
+from markdown import markdown
 from tweepy import Client
 from tweepy.asynchronous import AsyncClient
 from tweepy.client import BaseClient
-from langchain_core.tools import Tool
 
+from app.agents.twitter_agent.constants import TWEETS_MAX_RESULTS
 from app.utils.env_constants import (
     TWITTER_ACCESS_TOKEN,
     TWITTER_ACCESS_TOKEN_SECRET,
@@ -16,7 +17,7 @@ from app.utils.env_constants import (
     TWITTER_API_KEY_SECRET,
     TWITTER_BEARER_TOKEN,
 )
-from app.agents.twitter_agent.constants import TWEETS_MAX_RESULTS
+
 
 def _markdown_to_text(markdown_string: str) -> str:
     """ Converts a markdown string to plaintext """
@@ -207,10 +208,16 @@ def delete_tweet_sync(tweet_id: Annotated[str, "ID of the tweet to delete"]) -> 
     try:
         client = _get_twitter_client_v2()
         response = client.delete_tweet(id=tweet_id)
-        return {
-            "tweet_id": tweet_id,
-            "message": "Tweet deleted successfully"
-        }
+        if response.data.deleted:   
+            return {
+                "tweet_id": tweet_id,
+                "message": "Tweet deleted successfully"
+            }
+        else:
+            return {
+                "tweet_id": tweet_id,
+                "message": "Tweet deletion failed"
+            }
         
     except tweepy.TooManyRequests:
         return {"error": "Rate limit exceeded. Please wait before deleting again."}
@@ -238,10 +245,17 @@ async def delete_tweet_async(tweet_id: Annotated[str, "ID of the tweet to delete
     try:
         client = _get_twitter_client_v2(async_client=True)
         response = await client.delete_tweet(id=tweet_id)
-        return {
-            "tweet_id": tweet_id,
-            "message": "Tweet deleted successfully"
-        }
+
+        if response.data.deleted:   
+            return {
+                "tweet_id": tweet_id,
+                "message": "Tweet deleted successfully"
+            }
+        else:
+            return {
+                "tweet_id": tweet_id,
+                "message": "Tweet deletion failed"
+            }
     
     except tweepy.TooManyRequests:
         return {"error": "Rate limit exceeded. Please wait before deleting again."}

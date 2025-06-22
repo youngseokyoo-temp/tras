@@ -1,6 +1,8 @@
 import streamlit as st
 
 from app.llms.config import AVAILABLE_MODELS, get_model_config, get_model_versions
+from app.supervisor.constants import SUPERVISOR_NAME
+from app.utils.callbacks import LoggingCallback
 from app.utils.logger import get_logger
 from app.utils.streamlit_helpers import (
     get_chatbot,
@@ -17,8 +19,6 @@ from app.utils.ui_constants import (
     PROJECT_TITLE,
     THINKING_MESSAGE,
 )
-from app.supervisor.constants import SUPERVISOR_NAME
-from app.utils.callbacks import LoggingCallback
 
 # Page Config
 st.set_page_config(

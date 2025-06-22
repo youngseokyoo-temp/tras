@@ -6,8 +6,8 @@ from guardrails import Guard, OnFailAction
 from guardrails.hub import LlamaGuard7B
 from langgraph.types import Command
 
-from app.utils.env_constants import GOOGLE_SECRET_PATH
 from app.supervisor.constants import GUARD_VIOLATION_SYSTEM_MESSAGE
+from app.utils.env_constants import GOOGLE_SECRET_PATH
 
 _service = build(
     "checks",
@@ -60,7 +60,7 @@ def guard_using_llamaguard(state):
 
     try:
         _guard.validate(last_message.content)
-    except Exception as e:
+    except Exception:
         system_message = {
             "role": "system",
             "content": GUARD_VIOLATION_SYSTEM_MESSAGE
