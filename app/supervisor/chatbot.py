@@ -51,6 +51,11 @@ def create_handoff_tool(*, agent_name: str, description: str | None = None):
     return handoff_tool
 
 
+class State(MessagesState):
+    summarized_messages: str
+
+
+
 def get_supervisor_chatbot(
     llm: BaseChatModel,
     checkpointer: Checkpoint,
@@ -97,7 +102,7 @@ def get_supervisor_chatbot(
     )
 
     return (
-        StateGraph(MessagesState)
+        StateGraph(State)
         .add_node(
             SUPERVISOR_NAME,
             supervisor_agent,
