@@ -1,7 +1,7 @@
 # 🌏 TRAS!  - 나만의 여행 플랜 어시스턴트
 
 ![main](https://github.com/user-attachments/assets/dd47a45d-dc97-495c-99bc-08fdd345861b)
-(참고 - (1) 위 영상은 편집으로 실제 응답보다 빠르게 보입니다. (2) 편집으로 인해 필연적으로 워터마크가 포함되어 있습니다.)
+(참고 - (1) 위 영상은 편집으로 인해 응답의 시작까지 걸리는 시간이 실제보다 짧습니다. (2) 편집으로 인해 필연적으로 워터마크가 포함되어 있습니다.)
 
 **TRAS**는 대화만으로 여행의 시작부터 끝까지 함께하는 **멀티 에이전트 여행 플래너**입니다. 
 여러 AI 에이전트들이 협력하여 여행 계획을 수립하고, 완성된 계획을 캘린더에 등록하고 이를 SNS에 공유할 수 있는 기능을 제공합니다.
@@ -123,7 +123,7 @@ research_agent의 흐름 (예시)
 * Thought: 이제 실제 여행 후기를 확인해서 생생한 정보를 얻어보자.
 * Action: naver_blog_search("제주도 3박4일 여행 후기")
 
-[img]
+![supervisor](https://github.com/user-attachments/assets/959dba70-741d-4518-864b-565412f66705)
 
 에이전트들은 Supervisor 패턴을 통해 체계적으로 협력합니다:
 
@@ -136,7 +136,7 @@ research_agent의 흐름 (예시)
 
 > 각각의 agent에 의한 Tool 기능은 모두 실제로 동작함을 확인하였습니다.
 
-> 각각의 agnet에 의한 Tool 기능은 발생 가능한 Error를 핸들링하여 Runtime raise를 발생시키지 않고 에러메시지만을 에이전트에 전달하여 에이전트가 해당 Tool을 현재 사용할 수 없음을 알립니다. 
+> 각각의 agent에 의한 Tool 기능은 발생 가능한 Error를 핸들링하여 Runtime raise를 발생시키지 않고 에러메시지만을 에이전트에 전달하여 에이전트가 해당 Tool을 현재 사용할 수 없음을 알립니다. 
 
 ### Research agent
 
